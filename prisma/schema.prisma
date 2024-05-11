@@ -1,0 +1,84 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id  Int   @id @default(autoincrement())
+  name String
+
+  reports Report[]
+  posts Post[]
+  comments Comment[]
+  @@map("users")
+}
+
+model Post {
+  id     Int    @id @default(autoincrement())
+  title  String
+  createdAt DateTime @map("created_at")
+  updatedAt DateTime @map("updated_at")
+  authorId Int @map("author_id")
+  author User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  comments Comment[]
+  reports Report[]
+  @@map("posts")
+  @@index([authorId])
+  @@index([createdAt])
+}
+
+model Comment {
+  id     Int    @id @default(autoincrement())
+  text   String
+  postId Int @map("post_id")
+  userId Int @map("user_id")
+  createdAt DateTime @map("created_at")
+  updatedAt DateTime @map("updated_at")
+  user User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  reports Report[]
+  @@map("comments")
+  @@index([postId])
+  @@index([userId])
+}
+
+model Report {
+  id     Int    @id @default(autoincrement())
+  reason   String
+  postId Int? @map("post_id") 
+  userId Int? @map("user_id")
+  commentId Int? @map("comment_id")
+  createdAt DateTime @map("created_at")
+  updatedAt DateTime @map("updated_at")
+  user User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post   Post?   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  comment Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@map("reports")
+  @@index([postId])
+  @@index([userId])
+  @@index([commentId])
+}
+
+model ReportWithTarget {
+  id     Int    @id @default(autoincrement())
+  reason   String
+  targetId Int @map("target_id")
+  targetKind String @map("target_kind")
+  createdAt DateTime @map("created_at")
+  updatedAt DateTime @map("updated_at")
+  
+  @@map("reports_with_target")
+
+  @@index([targetId , targetKind])
+}
